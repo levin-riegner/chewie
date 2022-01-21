@@ -12,6 +12,7 @@ import 'package:chewie/src/models/subtitle_model.dart';
 import 'package:chewie/src/notifiers/index.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_video_cast/flutter_video_cast.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 
@@ -289,6 +290,38 @@ class _CupertinoControlsState extends State<CupertinoControls>
     );
   }
 
+  Widget _buildCastingButton(
+    Color backgroundColor,
+    Color iconColor,
+    double barHeight,
+    double buttonPadding,
+  ) {
+    return AnimatedOpacity(
+      opacity: notifier.hideStuff ? 0.0 : 1.0,
+      duration: const Duration(milliseconds: 300),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10.0),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 10.0),
+          child: Container(
+            height: barHeight,
+            padding: EdgeInsets.only(
+              left: buttonPadding,
+              right: buttonPadding,
+            ),
+            color: backgroundColor,
+            child: Center(
+              child: AirPlayButton(
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHitArea() {
     final bool isFinished = _latestValue.position >= _latestValue.duration;
     final bool showPlayButton =
@@ -551,6 +584,14 @@ class _CupertinoControlsState extends State<CupertinoControls>
         children: <Widget>[
           if (chewieController.allowFullScreen)
             _buildExpandButton(
+              backgroundColor,
+              iconColor,
+              barHeight,
+              buttonPadding,
+            ),
+          const SizedBox(width: 4),
+          if (chewieController.allowCasting)
+            _buildCastingButton(
               backgroundColor,
               iconColor,
               barHeight,

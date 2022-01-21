@@ -276,6 +276,7 @@ class ChewieController extends ChangeNotifier {
     this.systemOverlaysAfterFullScreen = SystemUiOverlay.values,
     this.deviceOrientationsAfterFullScreen = DeviceOrientation.values,
     this.routePageBuilder,
+    this.allowCasting = false,
   }) : assert(
           playbackSpeeds.every((speed) => speed > 0),
           'The playbackSpeeds values must all be greater than 0',
@@ -316,6 +317,7 @@ class ChewieController extends ChangeNotifier {
     List<DeviceOrientation>? deviceOrientationsOnEnterFullScreen,
     List<SystemUiOverlay>? systemOverlaysAfterFullScreen,
     List<DeviceOrientation>? deviceOrientationsAfterFullScreen,
+    bool? allowCasting,
 
   Widget Function(
       BuildContext,
@@ -360,6 +362,7 @@ class ChewieController extends ChangeNotifier {
       systemOverlaysAfterFullScreen: systemOverlaysAfterFullScreen ?? this.systemOverlaysAfterFullScreen,
       deviceOrientationsAfterFullScreen: deviceOrientationsAfterFullScreen ?? this.deviceOrientationsAfterFullScreen,
       routePageBuilder: routePageBuilder ?? this.routePageBuilder,
+      allowCasting: allowCasting ?? this.allowCasting,
     );
   }
 
@@ -456,6 +459,9 @@ class ChewieController extends ChangeNotifier {
 
   /// Defines if the mute control should be shown
   final bool allowMuting;
+
+  /// Defines if the casting control should be shown
+  final bool allowCasting;
 
   /// Defines if the playback speed control should be shown
   final bool allowPlaybackSpeedChanging;
