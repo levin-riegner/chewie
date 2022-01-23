@@ -84,9 +84,7 @@ class _MaterialDesktopControlsState extends State<MaterialDesktopControls> with 
           child: Stack(
             children: [
               if (_latestValue.isBuffering)
-                const Center(
-                  child: CircularProgressIndicator(),
-                )
+                Container()
               else
                 _buildHitArea(),
               Column(

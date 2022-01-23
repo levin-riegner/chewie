@@ -91,9 +91,7 @@ class _CupertinoControlsState extends State<CupertinoControls>
           child: Stack(
             children: [
               if (_latestValue.isBuffering)
-                const Center(
-                  child: CircularProgressIndicator(),
-                )
+                Container()
               else
                 _buildHitArea(),
               Column(
