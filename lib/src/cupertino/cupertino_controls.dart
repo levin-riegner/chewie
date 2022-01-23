@@ -229,6 +229,7 @@ class _CupertinoControlsState extends State<CupertinoControls>
                           _buildPosition(iconColor),
                           _buildProgressBar(),
                           _buildRemaining(iconColor),
+                          _buildAirPlayButton(iconColor, barHeight),
                           _buildSubtitleToggle(iconColor, barHeight),
                           if (chewieController.allowPlaybackSpeedChanging)
                             _buildSpeedButton(controller, iconColor, barHeight),
@@ -239,6 +240,14 @@ class _CupertinoControlsState extends State<CupertinoControls>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildAirPlayButton(Color iconColor, double barHeight) {
+    return AirPlayButton(
+      color: iconColor,
+      size: barHeight,
+      onPlayerStateChanged: _chewieController?.onAirPlayStateChanged,
     );
   }
 
@@ -311,9 +320,14 @@ class _CupertinoControlsState extends State<CupertinoControls>
             ),
             color: backgroundColor,
             child: Center(
-              child: AirPlayButton(
-                color: Colors.white,
-                size: 16,
+              child: ChromeCastButton(
+                color: iconColor,
+                size: barHeight,
+                onButtonCreated: _chewieController?.onChromeCastButtonCreated,
+                onSessionStarted: _chewieController?.onChromeCastSessionStarted,
+                onRequestCompleted: _chewieController?.onChromeCastRequestCompleted,
+                onRequestFailed: _chewieController?.onChromeCastRequestFailed,
+                onSessionEnded: _chewieController?.onChromeCastSessionEnded,
               ),
             ),
           ),

@@ -7,6 +7,7 @@ import 'package:chewie/src/notifiers/player_notifier.dart';
 import 'package:chewie/src/player_with_controls.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_video_cast/flutter_video_cast.dart';
 import 'package:provider/provider.dart';
 import 'package:video_player/video_player.dart';
 import 'package:wakelock/wakelock.dart';
@@ -40,7 +41,7 @@ class Chewie extends StatefulWidget {
 }
 
 class ChewieState extends State<Chewie> {
-  bool _isFullScreen = false; 
+  bool _isFullScreen = false;
 
   bool get isControllerFullScreen => widget.controller.isFullScreen;
   late PlayerNotifier notifier;
@@ -184,7 +185,8 @@ class ChewieState extends State<Chewie> {
 
   void onEnterFullScreen() {
     final videoWidth = widget.controller.videoPlayerController.value.size.width;
-    final videoHeight = widget.controller.videoPlayerController.value.size.height;
+    final videoHeight =
+        widget.controller.videoPlayerController.value.size.height;
 
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
 
@@ -201,7 +203,8 @@ class ChewieState extends State<Chewie> {
 
     if (widget.controller.deviceOrientationsOnEnterFullScreen != null) {
       /// Optional user preferred settings
-      SystemChrome.setPreferredOrientations(widget.controller.deviceOrientationsOnEnterFullScreen!);
+      SystemChrome.setPreferredOrientations(
+          widget.controller.deviceOrientationsOnEnterFullScreen!);
     } else {
       final isLandscapeVideo = videoWidth > videoHeight;
       final isPortraitVideo = videoWidth < videoHeight;
@@ -277,6 +280,12 @@ class ChewieController extends ChangeNotifier {
     this.deviceOrientationsAfterFullScreen = DeviceOrientation.values,
     this.routePageBuilder,
     this.allowCasting = false,
+    this.onChromeCastButtonCreated,
+    this.onChromeCastRequestCompleted,
+    this.onChromeCastRequestFailed,
+    this.onChromeCastSessionEnded,
+    this.onChromeCastSessionStarted,
+    this.onAirPlayStateChanged,
   }) : assert(
           playbackSpeeds.every((speed) => speed > 0),
           'The playbackSpeeds values must all be greater than 0',
@@ -318,8 +327,13 @@ class ChewieController extends ChangeNotifier {
     List<SystemUiOverlay>? systemOverlaysAfterFullScreen,
     List<DeviceOrientation>? deviceOrientationsAfterFullScreen,
     bool? allowCasting,
-
-  Widget Function(
+    Function(ChromeCastController)? onChromeCastButtonCreated,
+    Function()? onChromeCastSessionStarted,
+    Function()? onChromeCastRequestCompleted,
+    Function(String?)? onChromeCastRequestFailed,
+    Function()? onChromeCastSessionEnded,
+    Function? onAirPlayStateChanged,
+    Widget Function(
       BuildContext,
       Animation<double>,
       Animation<double>,
@@ -328,7 +342,8 @@ class ChewieController extends ChangeNotifier {
         routePageBuilder,
   }) {
     return ChewieController(
-      videoPlayerController: videoPlayerController ?? this.videoPlayerController,
+      videoPlayerController:
+          videoPlayerController ?? this.videoPlayerController,
       optionsTranslation: optionsTranslation ?? this.optionsTranslation,
       aspectRatio: aspectRatio ?? this.aspectRatio,
       autoInitialize: autoInitialize ?? this.autoInitialize,
@@ -336,11 +351,14 @@ class ChewieController extends ChangeNotifier {
       startAt: startAt ?? this.startAt,
       looping: looping ?? this.looping,
       fullScreenByDefault: fullScreenByDefault ?? this.fullScreenByDefault,
-      cupertinoProgressColors: cupertinoProgressColors ?? this.cupertinoProgressColors,
-      materialProgressColors: materialProgressColors ?? this.materialProgressColors,
+      cupertinoProgressColors:
+          cupertinoProgressColors ?? this.cupertinoProgressColors,
+      materialProgressColors:
+          materialProgressColors ?? this.materialProgressColors,
       placeholder: placeholder ?? this.placeholder,
       overlay: overlay ?? this.overlay,
-      showControlsOnInitialize: showControlsOnInitialize ?? this.showControlsOnInitialize,
+      showControlsOnInitialize:
+          showControlsOnInitialize ?? this.showControlsOnInitialize,
       showOptions: showOptions ?? this.showOptions,
       optionsBuilder: optionsBuilder ?? this.optionsBuilder,
       additionalOptions: additionalOptions ?? this.additionalOptions,
@@ -357,12 +375,23 @@ class ChewieController extends ChangeNotifier {
           allowPlaybackSpeedChanging ?? this.allowPlaybackSpeedChanging,
       useRootNavigator: useRootNavigator ?? this.useRootNavigator,
       playbackSpeeds: playbackSpeeds ?? this.playbackSpeeds,
-      systemOverlaysOnEnterFullScreen: systemOverlaysOnEnterFullScreen ?? this.systemOverlaysOnEnterFullScreen,
-      deviceOrientationsOnEnterFullScreen: deviceOrientationsOnEnterFullScreen ?? this.deviceOrientationsOnEnterFullScreen,
-      systemOverlaysAfterFullScreen: systemOverlaysAfterFullScreen ?? this.systemOverlaysAfterFullScreen,
-      deviceOrientationsAfterFullScreen: deviceOrientationsAfterFullScreen ?? this.deviceOrientationsAfterFullScreen,
+      systemOverlaysOnEnterFullScreen: systemOverlaysOnEnterFullScreen ??
+          this.systemOverlaysOnEnterFullScreen,
+      deviceOrientationsOnEnterFullScreen:
+          deviceOrientationsOnEnterFullScreen ??
+              this.deviceOrientationsOnEnterFullScreen,
+      systemOverlaysAfterFullScreen:
+          systemOverlaysAfterFullScreen ?? this.systemOverlaysAfterFullScreen,
+      deviceOrientationsAfterFullScreen: deviceOrientationsAfterFullScreen ??
+          this.deviceOrientationsAfterFullScreen,
       routePageBuilder: routePageBuilder ?? this.routePageBuilder,
       allowCasting: allowCasting ?? this.allowCasting,
+      onChromeCastButtonCreated: onChromeCastButtonCreated ?? this.onChromeCastButtonCreated,
+      onChromeCastRequestCompleted: onChromeCastRequestCompleted ?? this.onChromeCastRequestCompleted,
+      onChromeCastRequestFailed: onChromeCastRequestFailed ?? this.onChromeCastRequestFailed,
+      onChromeCastSessionEnded: onChromeCastSessionEnded ?? this.onChromeCastSessionEnded,
+      onChromeCastSessionStarted: onChromeCastSessionStarted ?? this.onChromeCastSessionStarted,
+      onAirPlayStateChanged: onAirPlayStateChanged ?? this.onAirPlayStateChanged,
     );
   }
 
@@ -384,13 +413,15 @@ class ChewieController extends ChangeNotifier {
   /// the builder method. Just add your own options to the Widget
   /// you'll build. If you want to hide the chewieOptions, just leave them
   /// out from your Widget.
-  final Future<void> Function(BuildContext context, List<OptionItem> chewieOptions)? optionsBuilder;
+  final Future<void> Function(
+      BuildContext context, List<OptionItem> chewieOptions)? optionsBuilder;
 
   /// Add your own additional options on top of chewie options
   final List<OptionItem> Function(BuildContext context)? additionalOptions;
 
   /// Define here your own Widget on how your n'th subtitle will look like
-  final Widget Function(BuildContext context, dynamic subtitle)? subtitleBuilder;
+  final Widget Function(BuildContext context, dynamic subtitle)?
+      subtitleBuilder;
 
   /// Add a List of Subtitles here in `Subtitles.subtitle`
   Subtitles? subtitle;
@@ -422,7 +453,8 @@ class ChewieController extends ChangeNotifier {
 
   /// When the video playback runs into an error, you can build a custom
   /// error message.
-  final Widget Function(BuildContext context, String errorMessage)? errorBuilder;
+  final Widget Function(BuildContext context, String errorMessage)?
+      errorBuilder;
 
   /// The Aspect Ratio of the Video. Important to get the correct size of the
   /// video!
@@ -487,8 +519,19 @@ class ChewieController extends ChangeNotifier {
   /// Defines a custom RoutePageBuilder for the fullscreen
   final ChewieRoutePageBuilder? routePageBuilder;
 
+  /// Chromecast utils
+  final Function(ChromeCastController)? onChromeCastButtonCreated;
+  final Function()? onChromeCastSessionStarted;
+  final Function()? onChromeCastRequestCompleted;
+  final Function(String?)? onChromeCastRequestFailed;
+  final Function()? onChromeCastSessionEnded;
+
+  /// AirPlay utils
+  final Function? onAirPlayStateChanged;
+
   static ChewieController of(BuildContext context) {
-    final chewieControllerProvider = context.dependOnInheritedWidgetOfExactType<_ChewieControllerProvider>()!;
+    final chewieControllerProvider = context
+        .dependOnInheritedWidgetOfExactType<_ChewieControllerProvider>()!;
 
     return chewieControllerProvider.controller;
   }
@@ -502,7 +545,8 @@ class ChewieController extends ChangeNotifier {
   Future _initialize() async {
     await videoPlayerController.setLooping(looping);
 
-    if ((autoInitialize || autoPlay) && !videoPlayerController.value.isInitialized) {
+    if ((autoInitialize || autoPlay) &&
+        !videoPlayerController.value.isInitialized) {
       await videoPlayerController.initialize();
     }
 
@@ -585,5 +629,6 @@ class _ChewieControllerProvider extends InheritedWidget {
   final ChewieController controller;
 
   @override
-  bool updateShouldNotify(_ChewieControllerProvider old) => controller != old.controller;
+  bool updateShouldNotify(_ChewieControllerProvider old) =>
+      controller != old.controller;
 }

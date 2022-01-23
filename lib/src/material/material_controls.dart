@@ -463,6 +463,11 @@ class _MaterialControlsState extends State<MaterialControls>
     return ChromeCastButton(
       size: barHeight,
       color: Colors.white,
+      onButtonCreated: _chewieController?.onChromeCastButtonCreated,
+      onSessionStarted: _chewieController?.onChromeCastSessionStarted,
+      onRequestCompleted: _chewieController?.onChromeCastRequestCompleted,
+      onRequestFailed: _chewieController?.onChromeCastRequestFailed,
+      onSessionEnded: _chewieController?.onChromeCastSessionEnded,
     );
   }
 
